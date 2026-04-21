@@ -52,42 +52,58 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 
   // ---------------------------
-  // BUTTONS
+  // BUTTON HANDLERS
   // ---------------------------
   if (interaction.isButton()) {
 
+    // =========================
     // 🟢 TRADE RECAP MODAL
+    // =========================
     if (interaction.customId === 'recap') {
 
       const modal = new ModalBuilder()
         .setCustomId('recapModal')
         .setTitle('Trade Recap');
 
-      const setup = new TextInputBuilder()
-        .setCustomId('setup')
-        .setLabel('Setup Type')
+      const instrument = new TextInputBuilder()
+        .setCustomId('instrument')
+        .setLabel('Instrument (e.g. MNQ, NQ)')
         .setStyle(TextInputStyle.Short);
 
-      const emotion = new TextInputBuilder()
-        .setCustomId('emotion')
-        .setLabel('Emotion (FOMO / Discipline / etc.)')
+      const direction = new TextInputBuilder()
+        .setCustomId('direction')
+        .setLabel('Direction (Long / Short)')
         .setStyle(TextInputStyle.Short);
 
-      const lesson = new TextInputBuilder()
-        .setCustomId('lesson')
-        .setLabel('Lesson Learned')
+      const entry = new TextInputBuilder()
+        .setCustomId('entry')
+        .setLabel('Entry Area')
+        .setStyle(TextInputStyle.Short);
+
+      const result = new TextInputBuilder()
+        .setCustomId('result')
+        .setLabel('Result (Win / Loss / BE)')
+        .setStyle(TextInputStyle.Short);
+
+      const summary = new TextInputBuilder()
+        .setCustomId('summary')
+        .setLabel('Summary')
         .setStyle(TextInputStyle.Paragraph);
 
       modal.addComponents(
-        new ActionRowBuilder().addComponents(setup),
-        new ActionRowBuilder().addComponents(emotion),
-        new ActionRowBuilder().addComponents(lesson)
+        new ActionRowBuilder().addComponents(instrument),
+        new ActionRowBuilder().addComponents(direction),
+        new ActionRowBuilder().addComponents(entry),
+        new ActionRowBuilder().addComponents(result),
+        new ActionRowBuilder().addComponents(summary)
       );
 
       return interaction.showModal(modal);
     }
 
+    // =========================
     // 🚨 VIOLATION MODAL
+    // =========================
     if (interaction.customId === 'violation') {
 
       const modal = new ModalBuilder()
@@ -118,7 +134,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.showModal(modal);
     }
 
+    // =========================
     // 🧘 NO TRADE MODAL
+    // =========================
     if (interaction.customId === 'notrade') {
 
       const modal = new ModalBuilder()
@@ -145,38 +163,41 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     const channel = await client.channels.fetch(process.env.REVIEW_CHANNEL_ID);
 
-    // 🟢 TRADE RECAP
+    // =========================
+    // 🟢 TRADE RECAP HANDLER
+    // =========================
     if (interaction.customId === 'recapModal') {
 
       await interaction.deferReply({ ephemeral: true });
 
-      const setup = interaction.fields.getTextInputValue('setup');
-      const emotion = interaction.fields.getTextInputValue('emotion');
-      const lesson = interaction.fields.getTextInputValue('lesson');
-
-      let pace = 10;
-      if (emotion.toLowerCase().includes('fomo')) pace -= 2;
+      const instrument = interaction.fields.getTextInputValue('instrument');
+      const direction = interaction.fields.getTextInputValue('direction');
+      const entry = interaction.fields.getTextInputValue('entry');
+      const result = interaction.fields.getTextInputValue('result');
+      const summary = interaction.fields.getTextInputValue('summary');
 
       await channel.send(`
 📊 **TRADE RECAP**
 
 👤 Trader: <@${interaction.user.id}>
 
-Setup: ${setup}
-Emotion: ${emotion}
+Instrument: ${instrument}
+Direction: ${direction}
+Entry Area: ${entry}
+Result: ${result}
 
-Lesson:
-${lesson}
+Summary:
+${summary}
 
 📸 **Attach screenshot under this post**
-
-🧠 PACE Score: ${pace}/10
       `);
 
       return interaction.editReply("✅ Trade recap submitted.");
     }
 
-    // 🚨 VIOLATION
+    // =========================
+    // 🚨 VIOLATION HANDLER
+    // =========================
     if (interaction.customId === 'violationModal') {
 
       await interaction.deferReply({ ephemeral: true });
@@ -200,7 +221,9 @@ ${lesson}
       return interaction.editReply("🚨 Violation logged.");
     }
 
-    // 🧘 NO TRADE
+    // =========================
+    // 🧘 NO TRADE HANDLER
+    // =========================
     if (interaction.customId === 'noTradeModal') {
 
       await interaction.deferReply({ ephemeral: true });
