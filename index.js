@@ -13,6 +13,10 @@ const {
 const cron = require('node-cron');
 require('dotenv').config();
 
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled promise rejection:', error);
+});
+
 console.log('DISCORD_TOKEN loaded:', !!process.env.DISCORD_TOKEN);
 console.log('REVIEW_CHANNEL_ID:', process.env.REVIEW_CHANNEL_ID || 'undefined');
 console.log('ENGAGEMENT_CHANNEL_ID:', process.env.ENGAGEMENT_CHANNEL_ID || 'undefined');
@@ -137,7 +141,6 @@ KEEP PACE.`);
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-
     // =========================
     // /PACE COMMAND
     // =========================
@@ -171,7 +174,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // BUTTON HANDLERS
     // =========================
     if (interaction.isButton()) {
-
       if (interaction.customId === 'recap') {
         const modal = new ModalBuilder()
           .setCustomId('recapModal')
@@ -343,19 +345,24 @@ ${reason}
   } catch (error) {
     console.error('Interaction error:', error);
 
-    if (interaction.isRepliable()) {
-      try {
-        if (interaction.deferred || interaction.replied) {
-          return interaction.editReply('⚠️ Something went wrong. Check bot logs.');
-        } else {
-          return interaction.reply({
-            content: '⚠️ Something went wrong. Check bot logs.',
-            ephemeral: true
-          });
-        }
-      } catch (replyError) {
-        console.error('Failed to send error reply:', replyError);
+    if (error.code === 10062) {
+      console.log('Interaction expired. Ignoring.');
+      return;
+    }
+
+    if (!interaction.isRepliable()) return;
+
+    try {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply('⚠️ Something went wrong. Check bot logs.');
+      } else {
+        await interaction.reply({
+          content: '⚠️ Something went wrong. Check bot logs.',
+          ephemeral: true
+        });
       }
+    } catch (replyError) {
+      console.error('Failed to send error response:', replyError);
     }
   }
 });
