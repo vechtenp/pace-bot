@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "discord.js": "^14.26.3",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
     "node-cron": "^3.0.3"
   }
 }
