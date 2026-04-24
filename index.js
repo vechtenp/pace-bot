@@ -38,7 +38,6 @@ function sendEngagementMessage(message) {
 client.once(Events.ClientReady, () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  // 6:15 AM Pacific - Premarket PACE Check
   cron.schedule("15 6 * * 1-5", () => {
     sendEngagementMessage(`@everyone
 
@@ -57,7 +56,6 @@ Don’t chase. Don’t force. KEEP PACE.`);
     timezone: "America/Los_Angeles"
   });
 
-  // 8:00 AM Pacific - NY Session Check-In
   cron.schedule("0 8 * * 1-5", () => {
     sendEngagementMessage(`@everyone
 
@@ -72,7 +70,6 @@ Drop what you're watching below.`);
     timezone: "America/Los_Angeles"
   });
 
-  // 10:30 AM Pacific - Midday Check-In
   cron.schedule("30 10 * * 1-5", () => {
     sendEngagementMessage(`@everyone
 
@@ -90,7 +87,6 @@ Be honest. Accountability builds consistency.`);
     timezone: "America/Los_Angeles"
   });
 
-  // 1:15 PM Pacific - Market Close Recap
   cron.schedule("15 13 * * 1-5", () => {
     sendEngagementMessage(`@everyone
 
@@ -105,7 +101,6 @@ Use /pace to log your session.`);
     timezone: "America/Los_Angeles"
   });
 
-  // 7:00 PM Pacific - Evening Reflection
   cron.schedule("0 19 * * 1-5", () => {
     sendEngagementMessage(`@everyone
 
@@ -120,7 +115,6 @@ KEEP PACE.`);
     timezone: "America/Los_Angeles"
   });
 
-  // Sunday 6:00 PM Pacific - Weekly Reset
   cron.schedule("0 18 * * 0", () => {
     sendEngagementMessage(`@everyone
 
@@ -148,6 +142,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // /PACE COMMAND
     // =========================
     if (interaction.isChatInputCommand() && interaction.commandName === 'pace') {
+      await interaction.deferReply({ ephemeral: true });
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -166,10 +161,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setStyle(ButtonStyle.Secondary)
       );
 
-      return interaction.reply({
+      return interaction.editReply({
         content: '📊 **PACE SYSTEM — Select an action**',
-        components: [row],
-        ephemeral: true
+        components: [row]
       });
     }
 
@@ -179,7 +173,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton()) {
 
       if (interaction.customId === 'recap') {
-
         const modal = new ModalBuilder()
           .setCustomId('recapModal')
           .setTitle('Trade Recap');
@@ -221,7 +214,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       if (interaction.customId === 'violation') {
-
         const modal = new ModalBuilder()
           .setCustomId('violationModal')
           .setTitle('Rule Violation');
@@ -251,7 +243,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       if (interaction.customId === 'notrade') {
-
         const modal = new ModalBuilder()
           .setCustomId('noTradeModal')
           .setTitle('No Trade Day');
@@ -273,18 +264,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // MODAL SUBMISSIONS
     // =========================
     if (interaction.isModalSubmit()) {
+      await interaction.deferReply({ ephemeral: true });
+
+      if (!process.env.REVIEW_CHANNEL_ID) {
+        return interaction.editReply('⚠️ REVIEW_CHANNEL_ID is missing.');
+      }
 
       const channel = await client.channels.fetch(process.env.REVIEW_CHANNEL_ID);
 
       if (!channel) {
-        return interaction.reply({
-          content: '⚠️ Review channel not found.',
-          ephemeral: true
-        });
+        return interaction.editReply('⚠️ Review channel not found.');
       }
 
       if (interaction.customId === 'recapModal') {
-
         const instrument = interaction.fields.getTextInputValue('instrument');
         const direction = interaction.fields.getTextInputValue('direction');
         const entry = interaction.fields.getTextInputValue('entry');
@@ -307,14 +299,10 @@ ${summary}
 📸 Attach screenshot under this post.
         `);
 
-        return interaction.reply({
-          content: '✅ Trade recap submitted.',
-          ephemeral: true
-        });
+        return interaction.editReply('✅ Trade recap submitted.');
       }
 
       if (interaction.customId === 'violationModal') {
-
         const rule = interaction.fields.getTextInputValue('rule');
         const emotion = interaction.fields.getTextInputValue('emotion');
         const lesson = interaction.fields.getTextInputValue('lesson');
@@ -331,14 +319,10 @@ What Should Have Happened:
 ${lesson}
         `);
 
-        return interaction.reply({
-          content: '🚨 Violation logged.',
-          ephemeral: true
-        });
+        return interaction.editReply('🚨 Violation logged.');
       }
 
       if (interaction.customId === 'noTradeModal') {
-
         const reason = interaction.fields.getTextInputValue('reason');
 
         await channel.send(`
@@ -352,21 +336,26 @@ ${reason}
 📊 Discipline Logged
         `);
 
-        return interaction.reply({
-          content: '🧘 No trade logged.',
-          ephemeral: true
-        });
+        return interaction.editReply('🧘 No trade logged.');
       }
     }
 
   } catch (error) {
-    console.error(error);
+    console.error('Interaction error:', error);
 
     if (interaction.isRepliable()) {
-      return interaction.reply({
-        content: '⚠️ Something went wrong.',
-        ephemeral: true
-      }).catch(() => {});
+      try {
+        if (interaction.deferred || interaction.replied) {
+          return interaction.editReply('⚠️ Something went wrong. Check bot logs.');
+        } else {
+          return interaction.reply({
+            content: '⚠️ Something went wrong. Check bot logs.',
+            ephemeral: true
+          });
+        }
+      } catch (replyError) {
+        console.error('Failed to send error reply:', replyError);
+      }
     }
   }
 });
