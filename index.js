@@ -59,7 +59,9 @@ Don’t chase. Don’t force. KEEP PACE.`);
 
   // 8:00 AM Pacific - NY Session Check-In
   cron.schedule("0 8 * * 1-5", () => {
-    sendEngagementMessage(`🚨 NY Session Check-In
+    sendEngagementMessage(`@everyone
+
+🚨 NY Session Check-In
 
 Market is moving.
 
@@ -72,7 +74,9 @@ Drop what you're watching below.`);
 
   // 10:30 AM Pacific - Midday Check-In
   cron.schedule("30 10 * * 1-5", () => {
-    sendEngagementMessage(`📊 Midday Check-In
+    sendEngagementMessage(`@everyone
+
+📊 Midday Check-In
 
 How’s the session going?
 
@@ -88,7 +92,9 @@ Be honest. Accountability builds consistency.`);
 
   // 1:15 PM Pacific - Market Close Recap
   cron.schedule("15 13 * * 1-5", () => {
-    sendEngagementMessage(`🔒 Market Close Recap
+    sendEngagementMessage(`@everyone
+
+🔒 Market Close Recap
 
 Win / Loss / No Trade?
 
@@ -101,7 +107,9 @@ Use /pace to log your session.`);
 
   // 7:00 PM Pacific - Evening Reflection
   cron.schedule("0 19 * * 1-5", () => {
-    sendEngagementMessage(`🌙 Evening Reflection
+    sendEngagementMessage(`@everyone
+
+🌙 Evening Reflection
 
 What’s one thing you’ll improve tomorrow?
 
@@ -136,7 +144,11 @@ KEEP PACE.`);
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
 
+    // =========================
+    // /PACE COMMAND
+    // =========================
     if (interaction.isChatInputCommand() && interaction.commandName === 'pace') {
+
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId('recap')
@@ -161,8 +173,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
     }
 
+    // =========================
+    // BUTTON HANDLERS
+    // =========================
     if (interaction.isButton()) {
+
       if (interaction.customId === 'recap') {
+
         const modal = new ModalBuilder()
           .setCustomId('recapModal')
           .setTitle('Trade Recap');
@@ -204,6 +221,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       if (interaction.customId === 'violation') {
+
         const modal = new ModalBuilder()
           .setCustomId('violationModal')
           .setTitle('Rule Violation');
@@ -233,6 +251,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       if (interaction.customId === 'notrade') {
+
         const modal = new ModalBuilder()
           .setCustomId('noTradeModal')
           .setTitle('No Trade Day');
@@ -250,7 +269,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
     }
 
+    // =========================
+    // MODAL SUBMISSIONS
+    // =========================
     if (interaction.isModalSubmit()) {
+
       const channel = await client.channels.fetch(process.env.REVIEW_CHANNEL_ID);
 
       if (!channel) {
@@ -261,6 +284,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       if (interaction.customId === 'recapModal') {
+
         const instrument = interaction.fields.getTextInputValue('instrument');
         const direction = interaction.fields.getTextInputValue('direction');
         const entry = interaction.fields.getTextInputValue('entry');
@@ -290,6 +314,7 @@ ${summary}
       }
 
       if (interaction.customId === 'violationModal') {
+
         const rule = interaction.fields.getTextInputValue('rule');
         const emotion = interaction.fields.getTextInputValue('emotion');
         const lesson = interaction.fields.getTextInputValue('lesson');
@@ -313,6 +338,7 @@ ${lesson}
       }
 
       if (interaction.customId === 'noTradeModal') {
+
         const reason = interaction.fields.getTextInputValue('reason');
 
         await channel.send(`
